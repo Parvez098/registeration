@@ -21,8 +21,8 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(Session({
-  maxAge: 60 * 60 * 1000,
-  secret: 'ilovescotchscotchyscotchscotch'
+  maxAge: process.env.age,
+  secret: process.env.secret
 }));
 app.use(passport.initialize());
 app.use(passport.session());
