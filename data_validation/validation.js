@@ -27,5 +27,21 @@ module.exports = {
         } else {
             return body;
         }
+    },
+    addressData:(checkBody,validationErrors,body)=>{
+        checkBody('address').notEmpty().withMessage("please provide your home address");
+        checkBody('pincode').notEmpty().withMessage("please enter pincode");
+        checkBody('city').notEmpty().withMessage("please enter your city name");
+        checkBody('state').notEmpty().withMessage("please enter your state");
+        let errors = validationErrors();
+        if(errors){
+            let msg="";
+            errors.forEach((error)=>{
+                msg=msg+error.msg+" ,";
+            });
+            return new Error(msg);
+        }else{
+            return body;
+        }
     }
 }

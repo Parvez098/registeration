@@ -6,7 +6,12 @@ var userSchema = new Schema({
     name: { type: String, required: true, trim: true },
     email: { type: String, required: true, trim: true, unique: true },
     password: { type: String, required: true, trim: true },
-    verified: { type: Boolean, default: false }
+    verified: { type: Boolean, default: false },
+    addresses:[{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:'Address',
+        default:null
+    }]
 });
 //userSchema.plugin(uniqueValidator);
 module.exports = mongoose.model('User', userSchema);

@@ -6,12 +6,13 @@ var sendMail = require("../mail_send/mailSend");
 var md5 = require("md5");
 var passport = require("passport");
 var LocalStrategy = require("passport-local");
+var Address = require("../model/address");
 
 passport.serializeUser((user, done) => {
     return done(null, user.id);
 });
 passport.deserializeUser((id, done) => {
-    User.findById(id, function(err, user) {
+    User.findById(id, function (err, user) {
         if (err) {
             return done(null, false);
         } else {
@@ -20,9 +21,9 @@ passport.deserializeUser((id, done) => {
     });
 })
 passport.use(new LocalStrategy({
-        usernameField: "email",
-        passReqToCallback: true
-    },
+    usernameField: "email",
+    passReqToCallback: true
+},
     (req, username, password, done) => {
         User.findOne({ email: username }, (err, obj) => {
             if (err) {
@@ -46,7 +47,7 @@ passport.use(new LocalStrategy({
     }
 ))
 
-router.post('/register', async(req, res, next) => {
+router.post('/register', async (req, res, next) => {
     let result = await dataValidation.RegisterData(req.checkBody, req.validationErrors, req.body);
     if (result instanceof Error) {
         res.status(400).json({ error: 1, message: result.message });
@@ -56,7 +57,7 @@ router.post('/register', async(req, res, next) => {
         if (error) {
             res.status(400).json({ error: 1, message: error.message });
         } else {
-            user.save(async(err, obj) => {
+            user.save(async (err, obj) => {
                 if (err) {
                     res.status(500).json({ error: 1, message: err.message });
                 } else {
@@ -87,7 +88,38 @@ router.post('/login', passport.authenticate('local', { failureRedirect: 'fail', 
 });
 
 router.get('/fail', (req, res) => {
-    console.log(req.user);
     res.status(400).json({ error: 1, message: req.flash('message') });
 })
+
+router.post('/addAddress/:userID', async (req, res) => {
+    result = await dataValidation.addressData(req.checkBody, req.validationErrors, req.body);
+    if (result instanceof Error) {
+        res.status(400).json({ error: 1, message: result.message });
+    } else {
+        var address = new Address({ address: result.address, pincode: result.pincode, city: result.city, state: result.state });
+        address.save((err, add) => {
+            if (err) {
+                res.status(500).json({ error: 1, message: "mongodb internal problem" });
+            } else {
+                User.findByIdAndUpdate(req.params.userID, { $push: { addresses: add._id } }, { new: true }, (err, user) => {
+                    if (err) {
+                        res.status(500).json({ error: 1, message: "mongodb internal problem" });
+                    } else {
+                        res.status(200).json({ status: 1, address: add, user: user });
+                    }
+                })
+            }
+        })
+    }
+});
+
+router.get('/profile/:userID', (req, res) => {
+    User.findById(req.params.userID).populate('addresses').exec((err, obj) => {
+        if (err) {
+            res.status(500).json({ error: 1, message: "error during populating" });
+        } else {
+            res.status(200).json({ status: 1, profile: obj });
+        }
+    })
+});
 module.exports = router;
